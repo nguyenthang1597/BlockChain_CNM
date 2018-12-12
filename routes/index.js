@@ -1,8 +1,9 @@
 const createError = require('http-errors');
 const test = require('./test');
-
+const detail = require('./detail')
 module.exports = (app) => {
   app.use('/', test);
+  app.use('/detail', detail)
   app.use(function(req, res, next) {
     next(createError(404));
   });
