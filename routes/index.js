@@ -1,5 +1,4 @@
 const createError = require('http-errors');
-const test = require('./test');
 const detail = require('./detail')
 module.exports = (app) => {
   app.use('/detail', detail)
