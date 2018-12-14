@@ -1,9 +1,16 @@
-var express = require('express');
-var router = express.Router();
-
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
-
-module.exports = router;
+const createError = require('http-errors');
+const test = require('./test');
+const detail = require('./detail')
+module.exports = (app) => {
+  app.use('/', test);
+  app.use('/detail', detail)
+  app.use(function(req, res, next) {
+    next(createError(404));
+  });
+  app.use(function(err, req, res, next) {
+    res.locals.message = err.message;
+    res.locals.error = req.app.get('env') === 'development' ? err : {};
+    res.status(err.status || 500);
+    res.send(err);
+  });
+}
