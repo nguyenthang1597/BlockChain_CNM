@@ -7,6 +7,8 @@ yarn-error.log*
 
 test*.js
 
+public/avatar
+
 # Runtime data
 pids
 *.pid
