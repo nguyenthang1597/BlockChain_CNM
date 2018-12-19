@@ -7,7 +7,6 @@ const fs = require('fs');
 var BASE64_MARKER = ';base64,';
 
 const GetByAddress = async (req, res) => {
-  console.log(req.query);
   let page = req.query.page || 1;
   let perpage = req.query.perpage || 10;
   let _page = parseInt(page, 10);
@@ -26,7 +25,6 @@ const GetByAddress = async (req, res) => {
       data: rows
     })
   } catch (e) {
-    console.log(e);
     return res.status(400).end();
   }
 }
