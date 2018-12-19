@@ -1,4 +1,4 @@
-  const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const Transaction = new Schema({
@@ -7,7 +7,8 @@ const Transaction = new Schema({
   Sequence: Number,
   Params: Schema.Types.Mixed,
   Time: Date,
-  Block: Number
+  Block: Number,
+  Size: Number
 })
 
 module.exports = mongoose.model('Transaction', Transaction);
