@@ -1,9 +1,11 @@
 const Transaction = require('../models/Transaction');
+const Account = require('../models/Account');
 const convertTxToPost = require('../lib/api/convertTxToPost');
 const getSequence = require('../lib/api/getSequence');
 const broadcastTx = require('../lib/api/broadcastTx');
+const countMoney = require('../lib/api/countMoney');
 const base64Img = require('base64-img');
-const fs = require('fs');
+
 var BASE64_MARKER = ';base64,';
 
 const GetByAddress = async (req, res) => {
@@ -31,24 +33,13 @@ const GetByAddress = async (req, res) => {
 
 const CountMoney = async (req, res) => {
   let address = req.params.address;
-  if(address){
-    try {
-      let rows = await Transaction.find({$or: [{"Address":address},{"Params.address":address}]})
-      rows = rows.map(i => convertTxToPost(address, i));
-      let total = 0;
-      rows.map(i=>{
-          if (i.Method === 'ReceivePayment')
-              total+= i.Content.Amount;
-          if (i.Method === 'SendPayment')
-              total-= i.Content.Amount;
-      })
-      return res.send({total: total});
-    } catch (e) {
-      console.log(e);
-      return res.status(400).end();
-    }
-  }
-  else{
+  try {
+    let money = await countMoney(address);
+    return res.json({
+      total: money
+    })
+  } catch (e) {
+    console.log(e);
     return res.status(400).end();
   }
 }
@@ -156,6 +147,26 @@ const UpdateAvatar = async (req, res) => {
 
 }
 
+const GetEnergy = async (req, res ) => {
+  try {
+    let account = await Account.findOne({Address: req.params.address});
+    if(!account)
+      return res.json({
+        Energy: 0
+      })
+    else
+      return res.json({
+        Energy: account.Energy
+      })
+  } catch (e) {
+      return res.status(400).end();
+  } finally {
+
+  }
+
+
+}
+
 
 
 
@@ -167,5 +178,6 @@ module.exports = {
   UpdateName,
   UpdateAvatar,
   GetAvatar,
-  GetName
+  GetName,
+  GetEnergy
 }
