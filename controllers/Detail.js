@@ -72,10 +72,10 @@ const GetAvatar = async (req, res) => {
   try {
     let rows = await Transaction.find({$and: [{Address: req.params.address, Operation: 'update_account'}, {$or: [{"Params.key": 'avatar'},{"Params.key": 'picture'}]}]}).sort({Time: -1}).limit(1);
     let buffer = Buffer.from(rows[0].Params.value, 'base64');
-    console.log(rows[0].Params.value);
-
+    let avatar = rows[0].Params.value;
+    avatar =  avatar.slice(0, 4) + ':' + avatar.slice(4, avatar.indexOf('base64')) + ';base64' + avatar.slice(avatar.indexOf('base64'), 6) + ',' + avatar.slice(avatar.indexOf('base64') + 6);
     return res.json({
-      Avatar: rows[0].Params.value,
+      Avatar: avatar,
     })
   } catch (e) {
     console.log(e);
