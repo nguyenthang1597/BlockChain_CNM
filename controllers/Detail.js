@@ -5,8 +5,8 @@ const getSequence = require('../lib/api/getSequence');
 const broadcastTx = require('../lib/api/broadcastTx');
 const countMoney = require('../lib/api/countMoney');
 const base64Img = require('base64-img');
-
-var BASE64_MARKER = ';base64,';
+const fs = require('fs');
+var BASE64_MARKER = 'data:image/jpeg;base64,';
 
 const GetByAddress = async (req, res) => {
   let page = req.query.page || 1;
@@ -123,14 +123,15 @@ const UpdateAvatar = async (req, res) => {
 
   var data = base64Img.base64Sync(req.file.path);
   let sequence = await getSequence(req.params.address);
+  data = data.slice(BASE64_MARKER.length)
   let params = {
     key: 'picture',
     value: data
   }
+  console.log(params);
   fs.unlinkSync(req.file.path);
   return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
     .then(response => {
-        console.log(response);
         if(response.log === '')
           return res.json({
             Success: true
