@@ -147,7 +147,6 @@ const UpdateAvatar = async (req, res) => {
     })
 
 }
-
 const GetEnergy = async (req, res ) => {
   try {
     let account = await Account.findOne({Address: req.params.address});
@@ -165,10 +164,7 @@ const GetEnergy = async (req, res ) => {
 
   }
 
-
 }
-
-
 
 
 
