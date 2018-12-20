@@ -1,15 +1,14 @@
 const Transaction = require('../models/Transaction');
+const Account = require('../models/Account');
 const convertTxToPost = require('../lib/api/convertTxToPost');
 const getSequence = require('../lib/api/getSequence');
 const broadcastTx = require('../lib/api/broadcastTx');
-const getMoney = require('../lib/api/getMoney')
-const bandwith = require('../lib/api/bandwith')
+const countMoney = require('../lib/api/countMoney');
 const base64Img = require('base64-img');
 const fs = require('fs');
-var BASE64_MARKER = ';base64,';
+var BASE64_MARKER = 'data:image/jpeg;base64,';
 
 const GetByAddress = async (req, res) => {
-  console.log(req.query);
   let page = req.query.page || 1;
   let perpage = req.query.perpage || 10;
   let _page = parseInt(page, 10);
@@ -28,23 +27,19 @@ const GetByAddress = async (req, res) => {
       data: rows
     })
   } catch (e) {
-    console.log(e);
     return res.status(400).end();
   }
 }
 
 const CountMoney = async (req, res) => {
   let address = req.params.address;
-  if(address){
-    try {
-      let total = await getMoney(address)
-      return res.send({Balance: total});
-    } catch (e) {
-      console.log(e);
-      return res.status(400).end();
-    }
-  }
-  else{
+  try {
+    let money = await countMoney(address);
+    return res.json({
+      total: money
+    })
+  } catch (e) {
+    console.log(e);
     return res.status(400).end();
   }
 }
@@ -66,10 +61,10 @@ const GetAvatar = async (req, res) => {
   try {
     let rows = await Transaction.find({$and: [{Address: req.params.address, Operation: 'update_account'}, {$or: [{"Params.key": 'avatar'},{"Params.key": 'picture'}]}]}).sort({Time: -1}).limit(1);
     let buffer = Buffer.from(rows[0].Params.value, 'base64');
-    console.log(rows[0].Params.value);
-
+    let avatar = rows[0].Params.value;
+    avatar =  avatar.slice(0, 4) + ':' + avatar.slice(4, avatar.indexOf('base64')) + ';base64' + avatar.slice(avatar.indexOf('base64'), 6) + ',' + avatar.slice(avatar.indexOf('base64') + 6);
     return res.json({
-      Avatar: rows[0].Params.value,
+      Avatar: avatar,
     })
   } catch (e) {
     console.log(e);
@@ -128,14 +123,15 @@ const UpdateAvatar = async (req, res) => {
 
   var data = base64Img.base64Sync(req.file.path);
   let sequence = await getSequence(req.params.address);
+  data = data.slice(BASE64_MARKER.length)
   let params = {
     key: 'picture',
     value: data
   }
+  console.log(params);
   fs.unlinkSync(req.file.path);
   return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
     .then(response => {
-        console.log(response);
         if(response.log === '')
           return res.json({
             Success: true
@@ -151,17 +147,21 @@ const UpdateAvatar = async (req, res) => {
     })
 
 }
-
-const Bandwith = async (req,res) => {
-  let address = req.params.address;
+const GetEnergy = async (req, res ) => {
   try {
-    let energy = await bandwith(address);
-    return res.send({
-      Bandwith: energy
-    })
+    let account = await Account.findOne({Address: req.params.address});
+    if(!account)
+      return res.json({
+        Energy: 0
+      })
+    else
+      return res.json({
+        Energy: account.Energy
+      })
   } catch (e) {
-    console.log(e);
-    return res.status(400).end();
+      return res.status(400).end();
+  } finally {
+
   }
 
 }
@@ -176,5 +176,5 @@ module.exports = {
   UpdateAvatar,
   GetAvatar,
   GetName,
-  Bandwith
+  GetEnergy
 }
