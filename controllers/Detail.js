@@ -59,12 +59,11 @@ const GetSequence = async (req, res) => {
 
 const GetAvatar = async (req, res) => {
   try {
-    let rows = await Transaction.find({$and: [{Address: req.params.address, Operation: 'update_account'}, {$or: [{"Params.key": 'avatar'},{"Params.key": 'picture'}]}]}).sort({Time: -1}).limit(1);
-    let buffer = Buffer.from(rows[0].Params.value, 'base64');
+    let rows = await Transaction.find({Address: req.params.address, Operation: 'update_account', "Params.key": 'picture'}).sort({Time: -1}).limit(1);
     let avatar = rows[0].Params.value;
-    avatar =  avatar.slice(0, 4) + ':' + avatar.slice(4, avatar.indexOf('base64')) + ';base64' + avatar.slice(avatar.indexOf('base64'), 6) + ',' + avatar.slice(avatar.indexOf('base64') + 6);
     return res.json({
       Avatar: avatar,
+      Marker: BASE64_MARKER
     })
   } catch (e) {
     console.log(e);
