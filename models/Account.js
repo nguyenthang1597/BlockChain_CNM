@@ -5,7 +5,8 @@ const Account = new Schema({
   Address: String,
   Bandwidth: {type: Number, default: BANDWIDTH_PERIOD},
   BandwidthTime: Date,
-  Energy: {type: Number, default: 0}
+  Energy: {type: Number, default: 0},
+  Following: [String]
 })
 
 module.exports = mongoose.model('Account', Account);

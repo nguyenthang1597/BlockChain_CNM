@@ -7,6 +7,7 @@ const countMoney = require('../lib/api/countMoney');
 const base64Img = require('base64-img');
 const fs = require('fs');
 var BASE64_MARKER = 'data:image/jpeg;base64,';
+const base32 = require('base32.js');
 
 const GetByAddress = async (req, res) => {
   let page = req.query.page || 1;
@@ -145,7 +146,6 @@ const UpdateAvatar = async (req, res) => {
     })
 
 }
-
 const GetEnergy = async (req, res ) => {
   try {
     let account = await Account.findOne({Address: req.params.address});
@@ -165,6 +165,33 @@ const GetEnergy = async (req, res ) => {
 
 
 }
+const FollowUser = async (req, res) => {
+  if(!req.body.following || !req.body.secret){
+    return res.status(400).end();
+  }
+  let following = await Account.findOne({Address:req.params.address})
+  req.body.following = Buffer.from(req.body.following,'base64')
+  following.Following=following.Following.concat(req.body.following)
+  following.Following=following.Following.map(i=>base32.encode(i))
+  let params = {
+    key: 'followings',
+    value: following.Following 
+  }
+  return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
+  .then(response => {
+      if(response.log === '')
+        return res.json({
+          Success: true
+        })
+      else return res.status(400).json({
+        Success: false
+      })
+  }).catch(e => {
+    return res.status(400).json({
+      Success: false
+    })
+  })
+}
 
 
 
@@ -178,5 +205,6 @@ module.exports = {
   UpdateAvatar,
   GetAvatar,
   GetName,
-  GetEnergy
+  GetEnergy,
+  FollowUser
 }
