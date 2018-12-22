@@ -7,7 +7,7 @@ const bandwith = require('../lib/api/bandwith')
 const base64Img = require('base64-img');
 const fs = require('fs');
 var BASE64_MARKER = ';base64,';
-
+const getFolowing = require('../lib/api/getFolowing')
 const GetByAddress = async (req, res) => {
   console.log(req.query);
   let page = req.query.page || 1;
@@ -165,7 +165,45 @@ const Bandwith = async (req,res) => {
 
 }
 
-
+const FollowUser = async (req, res) => {
+  if(!req.body.following || !req.body.secret){
+    return res.status(400).end();
+  }
+  let following = await getFolowing(req.params.address)
+  following=following.concat(req.body.following)
+  console.log(following)
+  let params = {
+    key: 'followings',
+    value: {
+      addresses: following
+    }
+  }
+  return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
+  .then(response => {
+      console.log(response)
+      if(response.log === '')
+        return res.json({
+          Success: true
+        })
+      else return res.status(400).json({
+        Success: false
+      })
+  }).catch(e => {
+    console.log("E",e)
+    return res.status(400).json({
+      Success: false
+    })
+  })
+}
+const GetFollowing = async (req,res) => {
+  try {
+    let following = await getFollowing(req.params.address)
+    console.log(following)
+    return res.json({'Following':following})
+  }catch(e){
+    return res.status(400).end();
+  }
+}
 
 module.exports = {
   GetByAddress,
@@ -175,5 +213,8 @@ module.exports = {
   UpdateAvatar,
   GetAvatar,
   GetName,
-  Bandwith
+  Bandwith,
+  GetEnergy,
+  FollowUser,
+  GetFollowing
 }
