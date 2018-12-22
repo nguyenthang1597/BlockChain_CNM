@@ -6,7 +6,7 @@ const getMoney = require('../lib/api/getMoney')
 const bandwith = require('../lib/api/bandwith')
 const base64Img = require('base64-img');
 const fs = require('fs');
-var BASE64_MARKER = ';base64,';
+var BASE64_MARKER = 'data:image/jpeg;base64,';
 const getFolowing = require('../lib/api/getFolowing')
 const GetByAddress = async (req, res) => {
   console.log(req.query);
@@ -77,7 +77,6 @@ const GetAvatar = async (req, res) => {
 
   }
 
-
 }
 
 const GetName = async (req, res) => {
@@ -111,11 +110,11 @@ const UpdateName = async (req, res) => {
           Success: true
         })
       else return res.status(400).json({
-        Success: false
+        Success: response
       })
   }).catch(e => {
     return res.status(400).json({
-      Success: false
+      Success: e
     })
   })
 }
@@ -150,9 +149,7 @@ const UpdateAvatar = async (req, res) => {
     })
 
 }
-
-const Bandwith = async (req,res) => {
-  let address = req.params.address;
+const GetEnergy = async (req, res ) => {
   try {
     let energy = await bandwith(address);
     return res.send({
@@ -164,7 +161,6 @@ const Bandwith = async (req,res) => {
   }
 
 }
-
 const FollowUser = async (req, res) => {
   if(!req.body.following || !req.body.secret){
     return res.status(400).end();
@@ -204,6 +200,9 @@ const GetFollowing = async (req,res) => {
     return res.status(400).end();
   }
 }
+
+
+
 
 module.exports = {
   GetByAddress,
