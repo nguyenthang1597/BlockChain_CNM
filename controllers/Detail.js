@@ -194,7 +194,15 @@ const FollowUser = async (req, res) => {
     })
   })
 }
-
+const GetFollowing = async (req,res) => {
+  try { 
+    let following = await getFollowing(req.params.address)
+    console.log(following)
+    return res.json({'Following':following})
+  }catch(e){
+    return res.status(400).end();
+  }
+}
 
 
 
@@ -208,5 +216,6 @@ module.exports = {
   GetAvatar,
   GetName,
   GetEnergy,
-  FollowUser
+  FollowUser,
+  GetFollowing
 }
