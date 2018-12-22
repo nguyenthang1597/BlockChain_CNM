@@ -1,11 +1,13 @@
 const Transaction = require('../models/Transaction');
+const Account = require('../models/Account');
 const convertTxToPost = require('../lib/api/convertTxToPost');
 const getSequence = require('../lib/api/getSequence');
 const broadcastTx = require('../lib/api/broadcastTx');
+const countMoney = require('../lib/api/countMoney');
 const base64Img = require('base64-img');
 const fs = require('fs');
-var BASE64_MARKER = ';base64,';
-
+var BASE64_MARKER = 'data:image/jpeg;base64,';
+const getFolowing = require('../lib/api/getFolowing')
 const GetByAddress = async (req, res) => {
   let page = req.query.page || 1;
   let perpage = req.query.perpage || 10;
@@ -31,24 +33,13 @@ const GetByAddress = async (req, res) => {
 
 const CountMoney = async (req, res) => {
   let address = req.params.address;
-  if(address){
-    try {
-      let rows = await Transaction.find({$or: [{"Address":address},{"Params.address":address}]})
-      rows = rows.map(i => convertTxToPost(address, i));
-      let total = 0;
-      rows.map(i=>{
-          if (i.Method === 'ReceivePayment')
-              total+= i.Content.Amount;
-          if (i.Method === 'SendPayment')
-              total-= i.Content.Amount;
-      })
-      return res.send({total: total});
-    } catch (e) {
-      console.log(e);
-      return res.status(400).end();
-    }
-  }
-  else{
+  try {
+    let money = await countMoney(address);
+    return res.json({
+      total: money
+    })
+  } catch (e) {
+    console.log(e);
     return res.status(400).end();
   }
 }
@@ -68,12 +59,11 @@ const GetSequence = async (req, res) => {
 
 const GetAvatar = async (req, res) => {
   try {
-    let rows = await Transaction.find({$and: [{Address: req.params.address, Operation: 'update_account'}, {$or: [{"Params.key": 'avatar'},{"Params.key": 'picture'}]}]}).sort({Time: -1}).limit(1);
-    let buffer = Buffer.from(rows[0].Params.value, 'base64');
+    let rows = await Transaction.find({Address: req.params.address, Operation: 'update_account', "Params.key": 'picture'}).sort({Time: -1}).limit(1);
     let avatar = rows[0].Params.value;
-    avatar =  avatar.slice(0, 4) + ':' + avatar.slice(4, avatar.indexOf('base64')) + ';base64' + avatar.slice(avatar.indexOf('base64'), 6) + ',' + avatar.slice(avatar.indexOf('base64') + 6);
     return res.json({
       Avatar: avatar,
+      Marker: BASE64_MARKER
     })
   } catch (e) {
     console.log(e);
@@ -81,7 +71,6 @@ const GetAvatar = async (req, res) => {
   } finally {
 
   }
-
 
 }
 
@@ -116,11 +105,11 @@ const UpdateName = async (req, res) => {
           Success: true
         })
       else return res.status(400).json({
-        Success: false
+        Success: response
       })
   }).catch(e => {
     return res.status(400).json({
-      Success: false
+      Success: e
     })
   })
 }
@@ -132,14 +121,15 @@ const UpdateAvatar = async (req, res) => {
 
   var data = base64Img.base64Sync(req.file.path);
   let sequence = await getSequence(req.params.address);
+  data = data.slice(BASE64_MARKER.length)
   let params = {
     key: 'picture',
     value: data
   }
+  console.log(params);
   fs.unlinkSync(req.file.path);
   return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
     .then(response => {
-        console.log(response);
         if(response.log === '')
           return res.json({
             Success: true
@@ -155,7 +145,64 @@ const UpdateAvatar = async (req, res) => {
     })
 
 }
+const GetEnergy = async (req, res ) => {
+  try {
+    let account = await Account.findOne({Address: req.params.address});
+    if(!account)
+      return res.json({
+        Energy: 0
+      })
+    else
+      return res.json({
+        Energy: account.Energy
+      })
+  } catch (e) {
+      return res.status(400).end();
+  } finally {
 
+  }
+
+
+}
+const FollowUser = async (req, res) => {
+  if(!req.body.following || !req.body.secret){
+    return res.status(400).end();
+  }
+  let following = await getFolowing(req.params.address)
+  following=following.concat(req.body.following)
+  console.log(following)
+  let params = {
+    key: 'followings',
+    value: {
+      addresses: following
+    } 
+  }
+  return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
+  .then(response => {
+      console.log(response)
+      if(response.log === '')
+        return res.json({
+          Success: true
+        })
+      else return res.status(400).json({
+        Success: false
+      })
+  }).catch(e => {
+    console.log("E",e)
+    return res.status(400).json({
+      Success: false
+    })
+  })
+}
+const GetFollowing = async (req,res) => {
+  try { 
+    let following = await getFollowing(req.params.address)
+    console.log(following)
+    return res.json({'Following':following})
+  }catch(e){
+    return res.status(400).end();
+  }
+}
 
 
 
@@ -167,5 +214,8 @@ module.exports = {
   UpdateName,
   UpdateAvatar,
   GetAvatar,
-  GetName
+  GetName,
+  GetEnergy,
+  FollowUser,
+  GetFollowing
 }
