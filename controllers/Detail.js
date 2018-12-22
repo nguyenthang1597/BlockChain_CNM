@@ -7,8 +7,7 @@ const countMoney = require('../lib/api/countMoney');
 const base64Img = require('base64-img');
 const fs = require('fs');
 var BASE64_MARKER = 'data:image/jpeg;base64,';
-const base32 = require('base32.js');
-
+const getFolowing = require('../lib/api/getFolowing')
 const GetByAddress = async (req, res) => {
   let page = req.query.page || 1;
   let perpage = req.query.perpage || 10;
@@ -106,11 +105,11 @@ const UpdateName = async (req, res) => {
           Success: true
         })
       else return res.status(400).json({
-        Success: false
+        Success: response
       })
   }).catch(e => {
     return res.status(400).json({
-      Success: false
+      Success: e
     })
   })
 }
@@ -169,16 +168,18 @@ const FollowUser = async (req, res) => {
   if(!req.body.following || !req.body.secret){
     return res.status(400).end();
   }
-  let following = await Account.findOne({Address:req.params.address})
-  req.body.following = Buffer.from(req.body.following,'base64')
-  following.Following=following.Following.concat(req.body.following)
-  following.Following=following.Following.map(i=>base32.encode(i))
+  let following = await getFolowing(req.params.address)
+  following=following.concat(req.body.following)
+  console.log(following)
   let params = {
     key: 'followings',
-    value: following.Following 
+    value: {
+      addresses: following
+    } 
   }
   return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
   .then(response => {
+      console.log(response)
       if(response.log === '')
         return res.json({
           Success: true
@@ -187,6 +188,7 @@ const FollowUser = async (req, res) => {
         Success: false
       })
   }).catch(e => {
+    console.log("E",e)
     return res.status(400).json({
       Success: false
     })
