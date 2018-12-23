@@ -1,14 +1,16 @@
 const Transaction = require('../models/Transaction');
-const Account = require('../models/Account');
+const Account = require('../models/Account')
 const convertTxToPost = require('../lib/api/convertTxToPost');
 const getSequence = require('../lib/api/getSequence');
 const broadcastTx = require('../lib/api/broadcastTx');
-const countMoney = require('../lib/api/countMoney');
+const getMoney = require('../lib/api/getMoney')
 const base64Img = require('base64-img');
+const getFollowing = require('../lib/api/getFollowing')
+const getFollower = require('../lib/api/getFollower');
 const fs = require('fs');
 var BASE64_MARKER = 'data:image/jpeg;base64,';
-const getFolowing = require('../lib/api/getFolowing')
 const GetByAddress = async (req, res) => {
+  console.log(req.query);
   let page = req.query.page || 1;
   let perpage = req.query.perpage || 10;
   let _page = parseInt(page, 10);
@@ -27,19 +29,23 @@ const GetByAddress = async (req, res) => {
       data: rows
     })
   } catch (e) {
+    console.log(e);
     return res.status(400).end();
   }
 }
 
 const CountMoney = async (req, res) => {
   let address = req.params.address;
-  try {
-    let money = await countMoney(address);
-    return res.json({
-      total: money
-    })
-  } catch (e) {
-    console.log(e);
+  if(address){
+    try {
+      let total = await getMoney(address)
+      return res.send({Balance: total});
+    } catch (e) {
+      console.log(e);
+      return res.status(400).end();
+    }
+  }
+  else{
     return res.status(400).end();
   }
 }
@@ -76,9 +82,13 @@ const GetAvatar = async (req, res) => {
 
 const GetName = async (req, res) => {
   try {
-    let rows = await Transaction.find({Address: req.params.address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1}).limit(1);
+    let row = await Transaction.findOne({Address: req.params.address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1})
+    if(!row)
+      return res.json({
+        Name: ''
+      })
     return res.json({
-      Name: rows[0].Params.value
+      Name: row.Params.value
     })
   } catch (e) {
     console.log(e);
@@ -121,15 +131,14 @@ const UpdateAvatar = async (req, res) => {
 
   var data = base64Img.base64Sync(req.file.path);
   let sequence = await getSequence(req.params.address);
-  data = data.slice(BASE64_MARKER.length)
   let params = {
     key: 'picture',
     value: data
   }
-  console.log(params);
   fs.unlinkSync(req.file.path);
   return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
     .then(response => {
+        console.log(response);
         if(response.log === '')
           return res.json({
             Success: true
@@ -157,12 +166,10 @@ const GetEnergy = async (req, res ) => {
         Energy: account.Energy
       })
   } catch (e) {
+    console.log(e);
+    
       return res.status(400).end();
-  } finally {
-
   }
-
-
 }
 const FollowUser = async (req, res) => {
   if(!req.body.following || !req.body.secret){
@@ -175,7 +182,7 @@ const FollowUser = async (req, res) => {
     key: 'followings',
     value: {
       addresses: following
-    } 
+    }
   }
   return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
   .then(response => {
@@ -195,11 +202,55 @@ const FollowUser = async (req, res) => {
   })
 }
 const GetFollowing = async (req,res) => {
-  try { 
+  try {
     let following = await getFollowing(req.params.address)
     console.log(following)
     return res.json({'Following':following})
   }catch(e){
+    console.log(e);
+    
+    return res.status(400).end();
+  }
+}
+
+const GetFollower = async (req, res) => {
+  try {
+    let followers = await getFollower(req.params.address);
+    return res.json({
+      Followers: followers
+    })
+  } catch (error) {
+    console.log(error);
+    
+    return res.status(400).end();
+  }
+}
+const GetInfo = async (req,res) => {
+  let address = req.params.address
+  try {
+    let Name = await Transaction.findOne({Address: address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1});
+    let name =(!Name) ? "" :  Name[0].Params.value 
+    let monney = await getMoney(address)
+    let sequence = await getSequence(address)
+    let Avatar = await Transaction.find({Address: address, Operation: 'update_account', "Params.key": 'picture'}).sort({Time: -1}).limit(1)
+    let avatar =(Avatar.length === 0) ? "" :  Avatar[0].Params.value 
+    let energy = await  Account.findOne({Address: address});
+    let following= await getFollowing(address)
+    let followers = await getFollower(address);
+    return res.json({
+      Name: name,
+      Balance:monney,
+      Sequence:sequence,
+      Avatar: {
+        Avatar: avatar,
+        Marker: BASE64_MARKER,
+      },
+      Energy: energy.Energy,
+      Followers: followers,
+      Following: following
+    })
+  } catch (error) {
+    console.log(error);
     return res.status(400).end();
   }
 }
@@ -217,5 +268,7 @@ module.exports = {
   GetName,
   GetEnergy,
   FollowUser,
-  GetFollowing
+  GetFollowing,
+  GetFollower,
+  GetInfo
 }
