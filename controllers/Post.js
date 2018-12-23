@@ -1,7 +1,7 @@
 const getSequence = require('../lib/api/getSequence')
 const broadcastTx = require('../lib/api/broadcastTx');
 const explorePost = require('../lib/api/explorePost');
-
+const Transaction = require('../models/Transaction')
 const Post = async (req, res) => {
   if(!req.body.address || !req.body.text || !req.body.secret){
     return res.status(400).end();
@@ -46,8 +46,29 @@ const Explore = async (req, res) => {
     return res.status(400).end();
   }
 }
-
+const GetComment = async (req, res) => {
+  try {
+    let comment = await Transaction.find({Address:req.params.address,Operation:'interact','Params.content.type':1,'Params.object':req.params.object})
+    return res.json({
+      comment: comment
+    })
+  }catch(e){
+    return  res.status(400).end()
+  }
+}
+const GetReaction = async (req, res) => {
+  try {
+    let react = await Transaction.find({Address:req.params.address,Operation:'interact','Params.content.type':2,'Params.object':req.params.object})
+    return res.json({
+      Reaction: react
+    })
+  }catch(e){
+    return  res.status(400).end()
+  }
+}
 module.exports = {
   Post,
-  Explore
+  Explore,
+  GetComment,
+  GetReaction
 }

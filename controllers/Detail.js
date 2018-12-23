@@ -229,7 +229,7 @@ const GetInfo = async (req,res) => {
   let address = req.params.address
   try {
     let Name = await Transaction.findOne({Address: address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1});
-    let name =(!Name) ? "" :  Name[0].Params.value 
+    let name =(!Name) ? "" :  Name.Params.value 
     let monney = await getMoney(address)
     let sequence = await getSequence(address)
     let Avatar = await Transaction.find({Address: address, Operation: 'update_account', "Params.key": 'picture'}).sort({Time: -1}).limit(1)
