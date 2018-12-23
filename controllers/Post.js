@@ -66,9 +66,63 @@ const GetReaction = async (req, res) => {
     return  res.status(400).end()
   }
 }
+const PostReaction = async (req, res) => {
+  if(!req.body.address || !req.body.reaction || !req.body.secret){
+    return res.status(400).end();
+  }
+  let params = {
+    object: req.params.object, 
+    content: {
+      type: 2,
+      reaction: req.body.reaction
+    }
+  }
+  return broadcastTx(req.body.address, 'interact', params, req.body.secret)
+  .then(response => {
+      if(response.log === '')
+        return res.json({
+          Success: true
+        })
+      else return res.status(400).json({
+        Success: false
+      })
+  }).catch(e => {
+    return res.status(400).json({
+      Success: false
+    })
+  })
+}
+const PostComment = async (req, res) => {
+  if(!req.body.address || !req.body.text || !req.body.secret){
+    return res.status(400).end();
+  }
+  let params = {
+    object: req.params.object, 
+    content: {
+      type: 1,
+      text: req.body.text
+    }
+  }
+  return broadcastTx(req.body.address, 'interact', params, req.body.secret)
+  .then(response => {
+      if(response.log === '')
+        return res.json({
+          Success: true
+        })
+      else return res.status(400).json({
+        Success: false
+      })
+  }).catch(e => {
+    return res.status(400).json({
+      Success: false
+    })
+  })
+}
 module.exports = {
   Post,
   Explore,
   GetComment,
-  GetReaction
+  GetReaction,
+  PostReaction,
+  PostComment
 }
