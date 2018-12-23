@@ -8,7 +8,8 @@ const Transaction = new Schema({
   Params: Schema.Types.Mixed,
   Time: Date,
   Block: Number,
-  Size: Number
+  Size: Number,
+  Hash: String
 })
 
 module.exports = mongoose.model('Transaction', Transaction);

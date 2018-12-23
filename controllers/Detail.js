@@ -1,13 +1,14 @@
 const Transaction = require('../models/Transaction');
+const Account = require('../models/Account')
 const convertTxToPost = require('../lib/api/convertTxToPost');
 const getSequence = require('../lib/api/getSequence');
 const broadcastTx = require('../lib/api/broadcastTx');
 const getMoney = require('../lib/api/getMoney')
-const bandwith = require('../lib/api/bandwith')
 const base64Img = require('base64-img');
+const getFollowing = require('../lib/api/getFollowing')
+const getFollower = require('../lib/api/getFollower');
 const fs = require('fs');
 var BASE64_MARKER = 'data:image/jpeg;base64,';
-const getFolowing = require('../lib/api/getFolowing')
 const GetByAddress = async (req, res) => {
   console.log(req.query);
   let page = req.query.page || 1;
@@ -81,9 +82,13 @@ const GetAvatar = async (req, res) => {
 
 const GetName = async (req, res) => {
   try {
-    let rows = await Transaction.find({Address: req.params.address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1}).limit(1);
+    let row = await Transaction.findOne({Address: req.params.address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1})
+    if(!row)
+      return res.json({
+        Name: ''
+      })
     return res.json({
-      Name: rows[0].Params.value
+      Name: row.Params.value
     })
   } catch (e) {
     console.log(e);
@@ -151,15 +156,20 @@ const UpdateAvatar = async (req, res) => {
 }
 const GetEnergy = async (req, res ) => {
   try {
-    let energy = await bandwith(address);
-    return res.send({
-      Bandwith: energy
-    })
+    let account = await Account.findOne({Address: req.params.address});
+    if(!account)
+      return res.json({
+        Energy: 0
+      })
+    else
+      return res.json({
+        Energy: account.Energy
+      })
   } catch (e) {
     console.log(e);
-    return res.status(400).end();
+    
+      return res.status(400).end();
   }
-
 }
 const FollowUser = async (req, res) => {
   if(!req.body.following || !req.body.secret){
@@ -197,9 +207,25 @@ const GetFollowing = async (req,res) => {
     console.log(following)
     return res.json({'Following':following})
   }catch(e){
+    console.log(e);
+    
     return res.status(400).end();
   }
 }
+
+const GetFollower = async (req, res) => {
+  try {
+    let followers = await getFollower(req.params.address);
+    return res.json({
+      Followers: followers
+    })
+  } catch (error) {
+    console.log(error);
+    
+    return res.status(400).end();
+  }
+}
+
 
 
 
@@ -212,8 +238,8 @@ module.exports = {
   UpdateAvatar,
   GetAvatar,
   GetName,
-  Bandwith,
   GetEnergy,
   FollowUser,
-  GetFollowing
+  GetFollowing,
+  GetFollower
 }

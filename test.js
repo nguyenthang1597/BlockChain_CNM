@@ -1,43 +1,65 @@
 let fetch = require('node-fetch');
-const {decode} = require('./lib/transaction')
+const vstruct = require('varstruct')
+const {encode, decode, sign} = require('./lib/transaction')
 const Transaction = require('./models/Transaction')
 require('./config/mongoose')
-const fetchByPage = async (totalTxs) => {
-  let txs = [];
-  let pages = totalTxs % 30 > 0 ? Math.round(totalTxs/30) + 1 : Math.round(totalTxs/30);
-  let arr = []
-  for(let page = 0; page<pages;page++){
-    arr.push(fetch(`https://komodo.forest.network/tx_search?query=%22account=%27GAO4J5RXQHUVVONBDQZSRTBC42E3EIK66WZA5ZSGKMFCS6UNYMZSIDBI%27%22&page=${page + 1}&per_page=30`))
-  }
+const rpc = require('./config/rpc');
 
-  Promise.all(arr)
-  .then(res => Promise.all(res.map(i => i.json())))
-  .then(data => {
-    for(let i = 0; i<data.length;i++){
-      txs = txs.concat(data[i].result.txs)
+const _Transaction = vstruct([
+  { name: 'version', type: vstruct.UInt8 },
+  { name: 'account', type: vstruct.Buffer(35) },
+  { name: 'sequence', type: vstruct.UInt64BE },
+  { name: 'memo', type: vstruct.VarBuffer(vstruct.UInt8) },
+  { name: 'operation', type: vstruct.UInt8 },
+  { name: 'params', type: vstruct.VarBuffer(vstruct.UInt16BE) },
+  { name: 'signature', type: vstruct.Buffer(64) },
+]);
+
+
+// console.log(ReactContent.decode(Buffer.from('AgM=','base64')));
+
+
+let tx = {
+  version: 1,
+  account: 'GAJQ47RMDTXYTCBMMW4A4DUMTB5RQLTGQZDMMABW6RTQJGKINJ4JTRTP',
+  sequence: 63,
+  memo: Buffer.alloc(0),
+  operation: 'interact',
+  params: {
+    object: '9128A87B6B74ED51DBE3CDE9B0CD8226923F48BD8B6BF75D6C3424B0CEBB7EB4',
+    content: {
+      type: 2,
+      reaction: 5
     }
-    txs.forEach(e => {
-
-      let _decode = decode(Buffer.from(e.tx, 'base64'));
-      console.log(_decode);
-      let tran = new Transaction({
-        Address: _decode.account,
-        Operation: _decode.operation,
-        Params: _decode.params,
-        Time: null,
-        Block: e.height
-      })
-      // tran.save();
-
-    })
-  })
+  },
+  signature: Buffer.alloc(64,0)
 }
+sign(tx, 'SARDDYAEVEABQTGOZEDOI454XUBXCF5LMNDX6Q3MGFZ53MONF2XDDQIU')
+
+let _encode = encode(tx)
+let txString = _encode.toString('base64');
+rpc.broadcastTxSync({tx: `${txString}`})
+.then(res => console.log(res))
+console.log(_encode);
 
 
+// let _encode = encode(tx);
+// console.log(_encode);
+// let _tx = decode(_encode)
+// console.log(_tx);
 
-fetch(`https://komodo.forest.network/tx_search?query=%22account=%27GAO4J5RXQHUVVONBDQZSRTBC42E3EIK66WZA5ZSGKMFCS6UNYMZSIDBI%27%22`)
-.then(res => res.json())
-.then(data => {
-  let totalTxs = data.result.total_count;
-  fetchByPage(totalTxs)
-})
+// const test = vstruct([
+//   { name: 'version', type: vstruct.UInt8 },
+//   { name: 'other', type: vstruct.UInt64BE}
+// ])
+
+// let txt = 'ATDWu4CH2zGdowQnEtrh97wGDp8eSyq6foVuU1x8Q6ipEpB7AAAAAAAAAHAABQBAGxcK6JOx+jeq80d4D1n+J0sc4t5N/otdQRX9aavkuTcAHgEAG1Zp4buHdCBOYW0gxJHDoyB2w7QgxJHhu4tjaHWDzSH2Bpjkm/h635ZlRXcO8SgLuPSEapke0g0U0rvL6uIakjDMOVxXRWMqZy14J1EwAulSurU1XHeQO7uBvgo='
+
+// let buffer = Buffer.from(txt, 'base64');
+// let tx = decode(buffer)
+// console.log(tx);
+
+// // let _test = _Transaction.decode(buffer);
+// // console.log(_test);
+
+

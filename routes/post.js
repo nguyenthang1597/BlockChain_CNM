@@ -1,6 +1,6 @@
 const router = require('express').Router();
-const {Post} = require('../controllers/Post');
+const {Post, Explore} = require('../controllers/Post');
 router.post('/', Post);
 
-
+router.get('/:address/explore', Explore)
 module.exports = router;

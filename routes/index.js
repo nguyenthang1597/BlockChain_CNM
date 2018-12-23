@@ -2,10 +2,12 @@ const createError = require('http-errors');
 const detail = require('./detail')
 const payment = require('./payment')
 const post = require('./post')
+const login = require('./login')
 module.exports = (app) => {
   app.use('/detail', detail);
   app.use('/payment', payment);
   app.use('/post', post);
+  app.use('/login', login);
   app.use(function(req, res, next) {
     next(createError(404));
   });
