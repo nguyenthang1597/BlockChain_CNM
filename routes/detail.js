@@ -11,7 +11,6 @@ router.get('/:address/energy', GetEnergy)
 router.get('/:address/follow',GetFollowing)
 router.get('/:address/follower', GetFollower);
 router.get('/:address/info', GetInfo);
-=======
 //update
 
 router.put('/:address/name', UpdateName);
