@@ -3,33 +3,18 @@ const vstruct = require('varstruct')
 const {encode, decode, sign} = require('./lib/transaction')
 const Transaction = require('./models/Transaction')
 require('./config/mongoose')
-const rpc = require('./config/rpc');
-
-const _Transaction = vstruct([
-  { name: 'version', type: vstruct.UInt8 },
-  { name: 'account', type: vstruct.Buffer(35) },
-  { name: 'sequence', type: vstruct.UInt64BE },
-  { name: 'memo', type: vstruct.VarBuffer(vstruct.UInt8) },
-  { name: 'operation', type: vstruct.UInt8 },
-  { name: 'params', type: vstruct.VarBuffer(vstruct.UInt16BE) },
-  { name: 'signature', type: vstruct.Buffer(64) },
-]);
-
-
-// console.log(ReactContent.decode(Buffer.from('AgM=','base64')));
-
+const rpc = require('./config/rpc')
 
 let tx = {
   version: 1,
   account: 'GAJQ47RMDTXYTCBMMW4A4DUMTB5RQLTGQZDMMABW6RTQJGKINJ4JTRTP',
-  sequence: 63,
+  sequence: 74,
   memo: Buffer.alloc(0),
-  operation: 'interact',
+  operation: 'update_account',
   params: {
-    object: '9128A87B6B74ED51DBE3CDE9B0CD8226923F48BD8B6BF75D6C3424B0CEBB7EB4',
-    content: {
-      type: 2,
-      reaction: 5
+    key: 'followings',
+    value: {
+      addresses: ['GDFNYQOHLZEHUQTUHWB4IH34QXXB6YEXJT5UFKM4O2D3CFGFWEQS4EB4']
     }
   },
   signature: Buffer.alloc(64,0)

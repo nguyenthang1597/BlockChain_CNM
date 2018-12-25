@@ -15,13 +15,16 @@ const UnSignedHash = async (req, res) => {
     params: req.body.params,
     signature: Buffer.alloc(64, 0)
   }
+  console.log(tx)
+  let _tx = Object.assign({}, tx);
   try {
     let UnsignedHash = getUnsignedHash(tx);
     return res.json({
       UnsignedHash,
-      tx
+      tx: _tx
     })
   } catch (error) {
+    console.log(error)
     return res.status(400).end();
   }
 }
@@ -29,8 +32,10 @@ const SendTx = async (req, res) => {
   let tx = req.body.tx;
   tx.memo = new Buffer(tx.memo.data)
   tx.signature = new Buffer(tx.signature.data);
+  console.log(tx)
   let _encode = encode(tx);
   let txString = _encode.toString('base64');
+  
   return broadcastTx(txString)
   .then(response => {
     if(response.log === ''){

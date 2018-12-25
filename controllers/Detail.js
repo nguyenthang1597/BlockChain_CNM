@@ -125,17 +125,18 @@ const UpdateName = async (req, res) => {
 }
 
 const UpdateAvatar = async (req, res) => {
-  console.log(req.file);
   if(!req.file || (req.file.size/1024) > 20 || !req.body.secret)
     return res.status(400).end();
 
   var data = base64Img.base64Sync(req.file.path);
-  let sequence = await getSequence(req.params.address);
   let params = {
     key: 'picture',
     value: data
   }
   fs.unlinkSync(req.file.path);
+
+
+  
   return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
     .then(response => {
         console.log(response);
@@ -177,7 +178,6 @@ const FollowUser = async (req, res) => {
   }
   let following = await getFolowing(req.params.address)
   following=following.concat(req.body.following)
-  console.log(following)
   let params = {
     key: 'followings',
     value: {
@@ -204,7 +204,6 @@ const FollowUser = async (req, res) => {
 const GetFollowing = async (req,res) => {
   try {
     let following = await getFollowing(req.params.address)
-    console.log(following)
     return res.json({'Following':following})
   }catch(e){
     console.log(e);
