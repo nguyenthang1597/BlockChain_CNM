@@ -3,11 +3,13 @@ const detail = require('./detail')
 const payment = require('./payment')
 const post = require('./post')
 const login = require('./login')
+const tx = require('./tx')
 module.exports = (app) => {
   app.use('/detail', detail);
   app.use('/payment', payment);
   app.use('/post', post);
   app.use('/login', login);
+  app.use('/tx', tx)
   app.use(function(req, res, next) {
     next(createError(404));
   });
