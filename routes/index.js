@@ -4,12 +4,14 @@ const payment = require('./payment')
 const post = require('./post')
 const login = require('./login')
 const tx = require('./tx')
+const account = require('./account')
 module.exports = (app) => {
   app.use('/detail', detail);
   app.use('/payment', payment);
   app.use('/post', post);
   app.use('/login', login);
   app.use('/tx', tx)
+  app.use('/account', account);
   app.use(function(req, res, next) {
     next(createError(404));
   });
