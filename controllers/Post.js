@@ -1,6 +1,7 @@
 const getSequence = require('../lib/api/getSequence')
 const broadcastTx = require('../lib/api/broadcastTx');
 const explorePost = require('../lib/api/explorePost');
+const Transaction = require('../models/Transaction')
 const {getComment, getReaction} = require('../lib/api/getAboutPost')
 const GetCommentAndReaction = async(req, res) => {
   let hash = req.params.hash;
@@ -12,6 +13,7 @@ const GetCommentAndReaction = async(req, res) => {
     reactions
   })
 }
+
 
 
 const Explore = async (req, res) => {

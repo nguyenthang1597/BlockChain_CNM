@@ -224,6 +224,35 @@ const GetFollower = async (req, res) => {
     return res.status(400).end();
   }
 }
+const GetInfo = async (req,res) => {
+  let address = req.params.address
+  try {
+    let Name = await Transaction.findOne({Address: address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1});
+    let name =(!Name) ? "" :  Name.Params.value 
+    let monney = await getMoney(address)
+    let sequence = await getSequence(address)
+    let Avatar = await Transaction.find({Address: address, Operation: 'update_account', "Params.key": 'picture'}).sort({Time: -1}).limit(1)
+    let avatar =(Avatar.length === 0) ? "" :  Avatar[0].Params.value 
+    let energy = await  Account.findOne({Address: address});
+    let following= await getFollowing(address)
+    let followers = await getFollower(address);
+    return res.json({
+      Name: name,
+      Balance:monney,
+      Sequence:sequence,
+      Avatar: {
+        Avatar: avatar,
+        Marker: BASE64_MARKER,
+      },
+      Energy: energy.Energy,
+      Followers: followers,
+      Following: following
+    })
+  } catch (error) {
+    console.log(error);
+    return res.status(400).end();
+  }
+}
 
 
 
@@ -240,5 +269,7 @@ module.exports = {
   GetEnergy,
   FollowUser,
   GetFollowing,
+  GetFollower,
+  GetInfo,
   GetFollower
 }
