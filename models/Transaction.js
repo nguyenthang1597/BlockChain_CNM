@@ -7,7 +7,9 @@ const Transaction = new Schema({
   Sequence: Number,
   Params: Schema.Types.Mixed,
   Time: Date,
-  Block: Number
+  Block: Number,
+  Size: Number,
+  Hash: String
 })
 
 module.exports = mongoose.model('Transaction', Transaction);

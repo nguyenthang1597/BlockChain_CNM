@@ -7,7 +7,7 @@ module.exports = (app) => {
   app.use('/detail', detail);
   app.use('/payment', payment);
   app.use('/post', post);
-  app.use('/login', login)
+  app.use('/login', login);
   app.use(function(req, res, next) {
     next(createError(404));
   });
