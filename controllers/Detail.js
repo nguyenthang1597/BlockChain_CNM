@@ -66,11 +66,15 @@ const GetSequence = async (req, res) => {
 const GetAvatar = async (req, res) => {
   try {
     let rows = await Transaction.find({Address: req.params.address, Operation: 'update_account', "Params.key": 'picture'}).sort({Time: -1}).limit(1);
-    let avatar = rows[0].Params.value;
-    return res.json({
-      Avatar: avatar,
-      Marker: BASE64_MARKER
-    })
+    if(rows){
+      let avatar = rows[0].Params.value;
+      return res.json({
+        Avatar: avatar,
+        Marker: BASE64_MARKER
+      })
+    }
+      return res.status(400).end();
+
   } catch (e) {
     console.log(e);
     return res.status(400).end();
@@ -81,11 +85,13 @@ const GetAvatar = async (req, res) => {
 }
 
 const GetName = async (req, res) => {
+  var address = req.params.address;
+  console.log(address);
   try {
-    let row = await Transaction.findOne({Address: req.params.address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1})
+    let row = await Transaction.findOne({Address: address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1})
     if(!row)
       return res.json({
-        Name: ''
+        Name: address
       })
     return res.json({
       Name: row.Params.value
@@ -93,8 +99,6 @@ const GetName = async (req, res) => {
   } catch (e) {
     console.log(e);
     return res.status(400).end();
-  } finally {
-
   }
 }
 
@@ -136,7 +140,7 @@ const UpdateAvatar = async (req, res) => {
   fs.unlinkSync(req.file.path);
 
 
-  
+
   return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
     .then(response => {
         console.log(response);
@@ -168,7 +172,7 @@ const GetEnergy = async (req, res ) => {
       })
   } catch (e) {
     console.log(e);
-    
+
       return res.status(400).end();
   }
 }
@@ -207,7 +211,7 @@ const GetFollowing = async (req,res) => {
     return res.json({'Following':following})
   }catch(e){
     console.log(e);
-    
+
     return res.status(400).end();
   }
 }
@@ -220,7 +224,7 @@ const GetFollower = async (req, res) => {
     })
   } catch (error) {
     console.log(error);
-    
+
     return res.status(400).end();
   }
 }
@@ -228,11 +232,11 @@ const GetInfo = async (req,res) => {
   let address = req.params.address
   try {
     let Name = await Transaction.findOne({Address: address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1});
-    let name =(!Name) ? "" :  Name.Params.value 
+    let name =(!Name) ? "" :  Name.Params.value
     let monney = await getMoney(address)
     let sequence = await getSequence(address)
     let Avatar = await Transaction.find({Address: address, Operation: 'update_account', "Params.key": 'picture'}).sort({Time: -1}).limit(1)
-    let avatar =(Avatar.length === 0) ? "" :  Avatar[0].Params.value 
+    let avatar =(Avatar.length === 0) ? "" :  Avatar[0].Params.value
     let energy = await  Account.findOne({Address: address});
     let following= await getFollowing(address)
     let followers = await getFollower(address);
