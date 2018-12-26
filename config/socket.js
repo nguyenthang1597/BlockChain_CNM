@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 
 
-const wssPostInteract = new WebSocket.Server({port: 8081, keep});
+const wssPostInteract = new WebSocket.Server({port: 8081});
 const wssUpdateAccount = new WebSocket.Server({port: 8082})
 
 

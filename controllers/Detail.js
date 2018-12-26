@@ -236,6 +236,7 @@ const GetInfo = async (req,res) => {
     let energy = await  Account.findOne({Address: address});
     let following= await getFollowing(address)
     let followers = await getFollower(address);
+    let payments = await await Transaction.find({Operation: 'payment', $or: [{Address: address}, {'Params.address': address}]}).sort({Time: -1});
     return res.json({
       Name: name,
       Balance:monney,
@@ -246,10 +247,26 @@ const GetInfo = async (req,res) => {
       },
       Energy: energy.Energy,
       Followers: followers,
-      Following: following
+      Following: following,
+      Payments: payments
     })
   } catch (error) {
     console.log(error);
+    return res.status(400).end();
+  }
+}
+
+const PaymentHistory = async (req, res) => {
+  let address = req.params.address;
+  try{
+    let rows = await Transaction.find({Operation: 'payment', $or: [{Address: address}, {'Params.address': address}]}).sort({Time: -1});
+    if(rows.length === 0)
+      return [];
+    return res.json({
+      data: rows
+    })
+  }
+  catch(e){
     return res.status(400).end();
   }
 }
@@ -271,5 +288,6 @@ module.exports = {
   GetFollowing,
   GetFollower,
   GetInfo,
-  GetFollower
+  GetFollower,
+  PaymentHistory
 }
