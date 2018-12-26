@@ -16,11 +16,10 @@ const GetByAddress = async (req, res) => {
   let _perpage = parseInt(perpage, 10);
   let address = req.params.address;
   try {
-    let rows = await Transaction.find({$or: [{"Address": address},{"Params.address": address}]}).limit(_perpage).skip((_page -1) * _perpage);
-    let total = await Transaction.find({$or: [{"Address": address},{"Params.address": address}]}).count();
+    let rows = await Transaction.find({"Address": address, Operation: {$ne: 'interact'}, 'Params.key': {$ne: 'followings'}}).sort({Time: -1}).limit(_perpage).skip((_page -1) * _perpage).select('Address Hash Operation Params Time');
+    let total = await Transaction.find({"Address": address}).count();
     let pages = Math.floor((total + _perpage) / _perpage);
-    rows = rows.map(i => convertTxToPost(address, i));
-    return res.send({
+    return res.json({
       page: _page,
       perpage: _perpage,
       total: total,
@@ -237,6 +236,7 @@ const GetInfo = async (req,res) => {
     let energy = await  Account.findOne({Address: address});
     let following= await getFollowing(address)
     let followers = await getFollower(address);
+    let payments = await await Transaction.find({Operation: 'payment', $or: [{Address: address}, {'Params.address': address}]}).sort({Time: -1});
     return res.json({
       Name: name,
       Balance:monney,
@@ -247,10 +247,26 @@ const GetInfo = async (req,res) => {
       },
       Energy: energy.Energy,
       Followers: followers,
-      Following: following
+      Following: following,
+      Payments: payments
     })
   } catch (error) {
     console.log(error);
+    return res.status(400).end();
+  }
+}
+
+const PaymentHistory = async (req, res) => {
+  let address = req.params.address;
+  try{
+    let rows = await Transaction.find({Operation: 'payment', $or: [{Address: address}, {'Params.address': address}]}).sort({Time: -1});
+    if(rows.length === 0)
+      return [];
+    return res.json({
+      data: rows
+    })
+  }
+  catch(e){
     return res.status(400).end();
   }
 }
@@ -272,5 +288,6 @@ module.exports = {
   GetFollowing,
   GetFollower,
   GetInfo,
-  GetFollower
+  GetFollower,
+  PaymentHistory
 }
