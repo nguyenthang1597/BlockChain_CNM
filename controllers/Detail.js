@@ -16,11 +16,10 @@ const GetByAddress = async (req, res) => {
   let _perpage = parseInt(perpage, 10);
   let address = req.params.address;
   try {
-    let rows = await Transaction.find({$or: [{"Address": address},{"Params.address": address}]}).limit(_perpage).skip((_page -1) * _perpage);
-    let total = await Transaction.find({$or: [{"Address": address},{"Params.address": address}]}).count();
+    let rows = await Transaction.find({"Address": address, Operation: {$ne: 'interact'}, 'Params.key': {$ne: 'followings'}}).sort({Time: -1}).limit(_perpage).skip((_page -1) * _perpage).select('Address Hash Operation Params Time');
+    let total = await Transaction.find({"Address": address}).count();
     let pages = Math.floor((total + _perpage) / _perpage);
-    rows = rows.map(i => convertTxToPost(address, i));
-    return res.send({
+    return res.json({
       page: _page,
       perpage: _perpage,
       total: total,
