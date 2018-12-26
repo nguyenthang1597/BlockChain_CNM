@@ -10,7 +10,6 @@ const getFollower = require('../lib/api/getFollower');
 const fs = require('fs');
 var BASE64_MARKER = 'data:image/jpeg;base64,';
 const GetByAddress = async (req, res) => {
-  console.log(req.query);
   let page = req.query.page || 1;
   let perpage = req.query.perpage || 10;
   let _page = parseInt(page, 10);
@@ -86,7 +85,6 @@ const GetAvatar = async (req, res) => {
 
 const GetName = async (req, res) => {
   var address = req.params.address;
-  console.log(address);
   try {
     let row = await Transaction.findOne({Address: address, Operation: 'update_account', "Params.key": 'name'}).sort({Time: -1})
     if(!row)
@@ -190,7 +188,6 @@ const FollowUser = async (req, res) => {
   }
   return broadcastTx(req.params.address, 'update_account', params, req.body.secret)
   .then(response => {
-      console.log(response)
       if(response.log === '')
         return res.json({
           Success: true
